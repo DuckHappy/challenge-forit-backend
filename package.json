@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start:prod": "node dist/main",
+    "start:prod": "node --max_old_space_size=1024 dist/main",
     "prisma:generate": "pnpm prisma generate",
     "render-build": "pnpm install --frozen-lockfile && pnpm prisma generate && pnpm run build",
     "build": "nest build",
