@@ -1,42 +1,60 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskDto } from './dto/update-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto'
 
 @Injectable()
 
-// array de memoria
-// private readonly testTask = [];
-
 export class TasksService {
-  constructor(private prisma: PrismaService) {}
 
-  findAll() {
-    return this.prisma.task.findMany();
+  // array de memoria
+  // private readonly testTask = [];
+
+ constructor(private prisma: PrismaService) {}
+
+  async findAll() {
+    return await this.prisma.task.findMany();
   }
 
-  findOne(id: string) {
-    return this.prisma.task.findUnique({
-      where: { id },
+  async findOne(id: string) {
+    const task = await this.prisma.task.findUnique({ where: { id } });
+
+    if (!task) {
+      throw new NotFoundException(`La tarea con el ${id} no fue encontrado`);
+    }
+
+    return task;
+  }
+
+  async create(dto: CreateTaskDto) {
+    if (!dto.title || !dto.description) {
+      throw new BadRequestException('Titulo y descripcion son requeridas');
+    }
+
+    return await this.prisma.task.create({
+      data: {
+        title: dto.title,
+        description: dto.description,
+      },
     });
   }
 
-  create(data: CreateTaskDto) {
-    return this.prisma.task.create({
-      data,
-    });
+  async update(id: string, dto: UpdateTaskDto) {
+    try {
+      return await this.prisma.task.update({
+        where: { id },
+        data: dto,
+      });
+    } catch {
+      throw new NotFoundException(`La tarea con el ${id} no fue encontrado`);
+    }
   }
 
-  update(id: string, data: UpdateTaskDto) {
-    return this.prisma.task.update({
-      where: { id },
-      data,
-    });
-  }
-
-  remove(id: string) {
-    return this.prisma.task.delete({
-      where: { id },
-    });
+  async remove(id: string) {
+    try {
+      return await this.prisma.task.delete({ where: { id } });
+    } catch {
+      throw new NotFoundException(`La tarea con el ${id} no fue encontrado`);
+    }
   }
 }
